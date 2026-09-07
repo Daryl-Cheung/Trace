@@ -1,0 +1,10 @@
+{
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "files.exclude": { "**/.*": false, "**/.env*": false },
+  "explorer.excludeGitIgnore": false,
+  "search.useIgnoreFiles": false,
+  "search.exclude": { "**/node_modules": true },
+
+  "javascript.inlayHints.parameterNames.enabled": "literals"
+}
