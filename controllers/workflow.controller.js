@@ -1,6 +1,8 @@
 import { createRequire } from 'module';
 import dayjs from 'dayjs';
 import Subscription from '../models/subscription.model.js';
+import { sendReminderEmail } from '../utils/send-email.js';
+
 const require = createRequire(import.meta.url);
 const {serve} = require('@upstash/workflow/express');
 
@@ -10,7 +12,7 @@ export const sendReminders = serve(async (context) => {
     const { subscriptionId } = context.requestPayload;
     const subscrtipion = await fetchSubscription(context, subscriptionId);
 
-    if (!subscrtipion || subscrtipion.status !== 'active') {
+    if (!subscrtipion || subscrtipion.status != 'active') {
         return;
     }
 
@@ -30,24 +32,33 @@ export const sendReminders = serve(async (context) => {
             await sleepUntilReminder(context, `Reminder ${daysBefore} days before renewal`, reminderDate);
         }
 
-        await triggerReminder(context, `Reminder for ${daysBefore} days before renewal`);
+        if(dayjs().isSame(reminderDate, 'day')) {
+            await triggerReminder(context, `Reminder for ${daysBefore} days before renewal`, subscrtipion, daysBefore);
+        }
+
+    
     }
 });
 
 const fetchSubscription = async (context, subscriptionId) => {
-    return await context.run('get subscription', () => {
+    return await context.run('get subscription', async () => {
         return Subscription.findById(subscriptionId).populate('user', 'name email');
     });
 }
 
 const sleepUntilReminder = async (context, label, date) => {
     console.log(`Sleeping until ${label} reminder date: ${date.toISOString()}`);
-    await context.sleepUntil(date.toDate());
+    await context.sleepUntil(label, date.toDate());
 }
 
-const triggerReminder = async (constext, label) => {
-    return await context.run(label, () => {
+const triggerReminder = async (context, label, subscription, daysBefore) => {
+    return await context.run(label, async () => {
         console.log(`Triggering ${label} reminder`);
-        // TODO: send email, sms, or push notification to user
+
+        await sendReminderEmail({
+            to: subscription.user.email,
+            type: `reminder-${daysBefore}`,
+            subscription,
+        });
     })
 }

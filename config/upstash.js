@@ -1,4 +1,4 @@
-import { Client } from '@upstash/qstash';
+import { Client } from '@upstash/workflow';
 
 import { QSTASH_URL, QSTASH_TOKEN } from './env.js';
 
